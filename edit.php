@@ -1,5 +1,5 @@
 <?php
-// edit.php - Edit Book
+// edit.php - Edit Book with Validation
 
 include 'db.php';
 
@@ -14,16 +14,24 @@ if (isset($_GET['id'])) {
 }
 
 if (isset($_POST['update'])) {
-    // Update book details
+    // Update book details with validation
     $title = $_POST['title'];
     $author = $_POST['author'];
     $publication_year = $_POST['publication_year'];
     $genre = $_POST['genre'];
 
-    $sql = "UPDATE books SET title = :title, author = :author, publication_year = :publication_year, genre = :genre WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['id' => $id, 'title' => $title, 'author' => $author, 'publication_year' => $publication_year, 'genre' => $genre]);
-    header('Location: index.php');
+    // Validation
+    if (empty($title) || empty($author) || empty($publication_year)) {
+        $error_message = "Title, Author, and Publication Year are required.";
+    } elseif (!is_numeric($publication_year) || strlen($publication_year) != 4) {
+        $error_message = "Please enter a valid 4-digit publication year.";
+    } else {
+        // Update the book in the database
+        $sql = "UPDATE books SET title = :title, author = :author, publication_year = :publication_year, genre = :genre WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['id' => $id, 'title' => $title, 'author' => $author, 'publication_year' => $publication_year, 'genre' => $genre]);
+        header('Location: index.php');
+    }
 }
 ?>
 
@@ -37,6 +45,12 @@ if (isset($_POST['update'])) {
 <body>
     <h1>Edit Book</h1>
 
+    <!-- Validation Error Message -->
+    <?php if (isset($error_message)): ?>
+        <p style="color: red;"><?php echo $error_message; ?></p>
+    <?php endif; ?>
+
+    <!-- Edit Book Form -->
     <form method="POST" action="">
         <label for="title">Title:</label>
         <input type="text" name="title" value="<?php echo htmlspecialchars($book['title']); ?>" required><br>
